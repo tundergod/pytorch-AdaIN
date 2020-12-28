@@ -66,11 +66,12 @@ def style_transfer(vgg, decoder, content, style, alpha=1.0,
     feat = feat * alpha + content_f * (1 - alpha)
     return decoder(feat)
 
-def spatial_control(vgg, decoder, content, stye, mask):
+def spatial_control(vgg, decoder, content, stye, mask, alpha=1.0):
     content_f = vgg(content)
-    style_f = vgg(style)#;import pdb; pdb.set_trace()
+    style_f = vgg(style)
     mask = F.interpolate(mask, (content_f.size(2), content_f.size(3)))
     base_feat = adaptive_instance_normalization(content_f, style_f)
+    base_feat = base_feat * alpha + content_f * (1 - alpha)
     feat = torch.sum(mask[:,0:1,:,:] * base_feat, dim=0, keepdim=True)
     return decoder(feat)
 
@@ -112,7 +113,7 @@ parser.add_argument('--preserve_color', action='store_true',
 parser.add_argument('--luminance_only', action='store_true',
                     help='If specified, perform style transfer \
                                     only in the luminance channel')
-parser.add_argument('--alpha', type=float, default=1.0,
+parser.add_argument('--alpha', type=str, default='1.0',
                     help='The weight that controls the degree of \
                              stylization. Should be between 0 and 1')
 parser.add_argument(
@@ -129,6 +130,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 output_dir = Path(args.output)
 output_dir.mkdir(exist_ok=True, parents=True)
+
+alpha = [float(i) for i in args.alpha.split(',')]
+if len(alpha) == 1:
+    args.alpha = alpha[0]
+else:
+    args.alpha = torch.tensor(alpha).reshape(-1, 1, 1, 1).to(device)
 
 # Either --content or --contentDir should be given.
 assert (args.content or args.content_dir)
@@ -201,6 +208,7 @@ for content_path in content_paths:
             content = Image.fromarray(content[:,:,2])
             content = content.convert('RGB')
         content = content_tf(content)
+        h, w = content.size(-2), content.size(-1)
         content = torch.stack([content for p in style_paths])
 
         styles = []
@@ -230,7 +238,7 @@ for content_path in content_paths:
             style_lum = style.to(device)
             with torch.no_grad():
                 output_lum = spatial_control(vgg, decoder, 
-                                             content_lum, style_lum, mask)
+                                             content_lum, style_lum, mask, args.alpha)
             output_lum = output_lum.cpu().squeeze()[0]
             output = content
             if (output_lum.size(-1) != output.size(-1)):
@@ -239,7 +247,7 @@ for content_path in content_paths:
         else:
             with torch.no_grad():
                 output = spatial_control(vgg, decoder, 
-                                         content, style, mask)
+                                         content, style, mask, args.alpha)
             output = output.cpu()
         output_name = output_dir / '{:s}_spatial{:s}'.format(
             content_path.stem, args.save_ext)
@@ -248,14 +256,24 @@ for content_path in content_paths:
             minimum, maximum = output_lum.min(), output_lum.max()
             output_lum = (output_lum - minimum) / (maximum - minimum)
             output_lum = (output_lum * 255).astype(np.uint8)
-            content_pil = content_pil.resize((output_lum.shape[1], 
-                                              output_lum.shape[0]))
+            if output_lum.shape[1] > w:
+                pad = (output_lum.shape[1] - w) // 2
+                output_lum = output_lum[:,pad:-pad]
+            if output_lum.shape[0] > h:
+                pad = (output_lum.shape[0] - h) // 2
+                output_lum = output_lum[pad:-pad,:]
             content_np = np.array(content_pil)
             content_np[:,:,2] = output_lum
             output = Image.fromarray(content_np, mode='HSV')
             output = output.convert('RGB')
             output.save(str(output_name))
         else:
+            if output.shape[3] > w:
+                pad = (output.shape[3] - w) // 2
+                output = output[:,:,:,pad:-pad]
+            if output.shape[2] > h:
+                pad = (output.shape[2] - h) // 2
+                output = output[:,:,pad:-pad,:]
             save_image(output, str(output_name))
 
 
@@ -270,6 +288,7 @@ for content_path in content_paths:
                 content = Image.fromarray(content[:,:,2])
                 content = content.convert('RGB')
             content = content_tf(content)
+            h, w = content.size(-2), content.size(-1)
 
             style = Image.open(str(style_path))
             if args.luminance_only:
@@ -309,12 +328,22 @@ for content_path in content_paths:
                 minimum, maximum = output_lum.min(), output_lum.max()
                 output_lum = (output_lum - minimum) / (maximum - minimum)
                 output_lum = (output_lum * 255).astype(np.uint8)
-                content_pil = content_pil.resize((output_lum.shape[1], 
-                                                output_lum.shape[0]))
+                if output_lum.shape[1] > w:
+                    pad = (output_lum.shape[1] - w) // 2
+                    output_lum = output_lum[:,pad:-pad]
+                if output_lum.shape[0] > h:
+                    pad = (output_lum.shape[0] - h) // 2
+                    output_lum = output_lum[pad:-pad,:]
                 content_np = np.array(content_pil)
                 content_np[:,:,2] = output_lum
                 output = Image.fromarray(content_np, mode='HSV')
                 output = output.convert('RGB')
                 output.save(str(output_name))
             else:
+                if output.shape[3] > w:
+                    pad = (output.shape[3] - w) // 2
+                    output = output[:,:,:,pad:-pad]
+                if output.shape[2] > h:
+                    pad = (output.shape[2] - h) // 2
+                    output = output[:,:,pad:-pad,:]
                 save_image(output, str(output_name))
