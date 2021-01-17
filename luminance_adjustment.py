@@ -53,7 +53,7 @@ for i in range(1,cnt):
             y2 = np.square(int(frame_pre[j][k][2])-int(frames_yuv[i][j][j][2]))
             xy_sqrt = np.sqrt(x2+y2)
 
-            if xy_sqrt < 25: #same color, correct the brightness
+            if xy_sqrt < 30: #same color, correct the brightness
                 if np.abs(int(frames_yuv[i][j][k][0])-int(frame_pre[j][k][0])) < 25:
                     if frame_pre[j][k][0] < frames_yuv[i][j][k][0]:
                         new_frame[j][k][0] = frame_pre[j][k][0] +1
