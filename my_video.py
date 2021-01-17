@@ -4,7 +4,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import argparse
 from pathlib import Path
 from tqdm import tqdm
-
+from skimage.exposure import cumulative_distribution
 import torch
 import torch.nn as nn
 import numpy as np
@@ -19,6 +19,32 @@ from function import adaptive_instance_normalization, coral
 
 import warnings
 warnings.filterwarnings("ignore")
+
+#-----CT
+def cdf(im):
+    '''
+    computes the CDF of an image im as 2D numpy ndarray
+    '''
+    c, b = cumulative_distribution(im) 
+    # pad the beginning and ending pixels and their CDF values
+    c = np.insert(c, 0, [0]*b[0])
+    c = np.append(c, [1]*(255-b[-1]))
+    return c
+ 
+def hist_matching(c, c_t, im):
+    '''
+    c: CDF of input image computed with the function cdf()
+    c_t: CDF of template image computed with the function cdf()
+    im: input image as 2D numpy ndarray
+    returns the modified pixel values
+    ''' 
+    pixels = np.arange(256)
+    # find closest pixel-matches corresponding to the CDF of the input image, given the value of the CDF H of   
+    # the template image at the corresponding pixels, s.t. c_t = H(pixels) <=> pixels = H-1(c_t)
+    new_pixels = np.interp(c, c_t, pixels) 
+    im = (np.reshape(new_pixels[im.ravel()], im.shape)).astype(np.uint8)
+    return im
+#-----CT
 
 #--------------------------For preserving color, CLTsai------------------------------------#
 def preserve(img, content_yuv):
@@ -73,6 +99,8 @@ parser.add_argument('--save_ext', default='.mp4',
                     help='The extension name of the output video')
 parser.add_argument('--output', type=str, default='output',
                     help='Directory to save the output image(s)')
+parser.add_argument('--UV_color', action='store_true',
+                    help='Preserving color by applying UV dimension of content')
 
 # Advanced options
 parser.add_argument('--alpha', type=float, default=0.7,
@@ -130,25 +158,22 @@ output_height = int(content_video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 assert fps != 0, 'Fps is zero, Please enter proper video path'
 
-pbar = tqdm(total = content_video_length)
+pbar = tqdm(total = 362)        
 
-if style_path.suffix in [".jpg", ".png", ".JPG", ".PNG"]:
+if args.UV_color or args.style=="sketch" or args.style=="ink":
 
-    output_video_path = output_dir / '{:s}_stylized_{:s}{:s}'.format(
-                content_path.stem, args.style, args.save_ext)
-    
+    output_video_path = output_dir / '{:s}{:s}'.format(
+                args.style, args.save_ext)
+    args.alpha = 0.6
     #--------------------------For preserving color, CLTsai------------------------------------#
     if args.style=="oil" or args.style=="water":
-        output_video_path2 = output_dir / '{:s}_stylized_color_preserved_{:s}{:s}'.format(
-                    content_path.stem, args.style, args.save_ext)
+        output_video_path2 = output_dir / 'UV_{:s}{:s}'.format(
+                    args.style, args.save_ext)
         writer_preserve = imageio.get_writer(output_video_path2, mode='I', fps=fps)
     #------------------------------------------------------------------------------------------#
     
     writer = imageio.get_writer(output_video_path, mode='I', fps=fps)
-    
-    if args.style=="sketch" or args.style=="ink":
-        args.alpha = 0.6
-    
+       
     style_img = Image.open(style_path)
     #while(True):
     while(content_video.isOpened()):
@@ -185,6 +210,99 @@ if style_path.suffix in [".jpg", ".png", ".JPG", ".PNG"]:
         if args.style=="oil" or args.style=="water":
             output_preserve = preserve(output,content_yuv)
             writer_preserve.append_data(np.array(output_preserve))
+    #------------------------------------------------------------------------------------------#
+        writer.append_data(np.array(output))
+        pbar.update(1)
+    
+    content_video.release()
+
+else:
+    output_video_path = output_dir / 'luma_{:s}{:s}'.format(
+                args.style, args.save_ext)
+    
+    #--------------------------For preserving color, CLTsai------------------------------------#
+    #if args.style=="oil" or args.style=="water":
+        #output_video_path2 = output_dir / 'lumi_{:s}_stylized_color_preserved_{:s}{:s}'.format(
+                    #content_path.stem, args.style, args.save_ext)
+        #writer_preserve = imageio.get_writer(output_video_path2, mode='I', fps=fps)
+    #------------------------------------------------------------------------------------------#
+    
+    writer = imageio.get_writer(output_video_path, mode='I', fps=fps)
+    
+    
+    style_img = Image.open(style_path)
+    style_img = style_img.convert('HSV')
+    style_img = np.array(style_img)
+    style_cdf = cdf(style_img[:,:,2])
+    style_img = Image.fromarray(style_img[:,:,2])
+    style_img_org = style_img.convert('RGB')
+
+    
+    if args.style=="sketch" or args.style=="ink":
+        args.alpha = 0.6
+    
+    while(content_video.isOpened()):
+        ret, content_img = content_video.read()
+        
+        if not ret:
+            break
+        if args.style=="sketch" or args.style=="ink":
+            content_img = cv2.cvtColor(content_img, cv2.COLOR_BGR2GRAY)
+            content_img = cv2.cvtColor(content_img, cv2.COLOR_GRAY2BGR)
+            
+    #--------------CT
+        content_img_pil = Image.fromarray(cv2.cvtColor(content_img,cv2.COLOR_BGR2RGB))
+        content = content_img_pil.convert('HSV')
+        content_pil = content
+        content = np.array(content)
+        content_cdf = cdf(content[:,:,2])
+        content = Image.fromarray(content[:,:,2])
+        content = content.convert('RGB')
+        content = content_tf(content)
+        h, w = content.size(-2), content.size(-1)        
+
+        style_img = style_img_org.convert('HSV')
+        style_img = np.array(style_img)
+        style_img[:,:,2] = hist_matching(style_cdf, content_cdf, style_img[:,:,2])
+        style_img = Image.fromarray(style_img[:,:,2])
+        style_img = style_img.convert('RGB')
+        style = style_tf(style_img)
+    #--------------CT
+    
+        content_lum = content.to(device).unsqueeze(0)
+        style_lum = style.to(device).unsqueeze(0)
+        with torch.no_grad():
+            output_lum = style_transfer(vgg, decoder, content_lum, style_lum,
+                                    args.alpha)
+        output_lum = output_lum.cpu().squeeze()[0]
+        output = content
+        if (output_lum.size(-1) != output.size(-1)):
+            pad = (output_lum.size(-1) - output.size(-1)) // 2
+            output_lum = output_lum[:, pad:-pad]
+        output_lum = output_lum.numpy()
+        minimum, maximum = output_lum.min(), output_lum.max()
+        output_lum = (output_lum - minimum) / (maximum - minimum)
+        output_lum = (output_lum * 255).astype(np.uint8)
+        if output_lum.shape[1] > w:
+            pad = (output_lum.shape[1] - w) // 2
+            output_lum = output_lum[:,pad:-pad]
+        if output_lum.shape[0] > h:
+            pad = (output_lum.shape[0] - h) // 2
+            output_lum = output_lum[pad:-pad,:]
+        content_np = np.array(content_pil)
+        content_np[:,:,2] = output_lum
+        output = Image.fromarray(content_np, mode='HSV')
+        output = output.convert('RGB')
+        
+        
+    #--------------------------For preserving color, CLTsai------------------------------------#
+        #if args.style=="oil" or args.style=="water":
+            #content_yuv = cv2.cvtColor(np.float32(content_img_pil), cv2.COLOR_RGB2YUV)
+    #------------------------------------------------------------------------------------------#
+    #--------------------------For preserving color, CLTsai------------------------------------#
+        #if args.style=="oil" or args.style=="water":
+            #output_preserve = preserve(output,content_yuv)
+            #writer_preserve.append_data(np.array(output_preserve))
     #------------------------------------------------------------------------------------------#
         writer.append_data(np.array(output))
         pbar.update(1)
