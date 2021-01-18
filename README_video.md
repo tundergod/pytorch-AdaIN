@@ -11,7 +11,7 @@ For better output result, we work on content-color preserving, luminance-style t
 ### Baseline
 Use `--style` to select the desired style: oil/water/sketch/ink.
 ```bash
-python3 my_video.py --style [style options]
+python my_video.py --style [style options]
 ```
 By default, in the procedure of style tranfer for *sketch* and *ink*, we will convert the contents into graysacle and the grayscale contents will be stylized into outputs with *all information, i.e., luminance and color* in the style image.  
 For the styles *oil* and *water*, we will only transfer the style of *luminance* of the contents.  
@@ -37,7 +37,7 @@ To perform video deflickering, follow the instructions below.
 ## Video deflickering
 ### Temporal smoothing:
 ```bash
-python3 temporal_smoothing.py [videoPath]
+python temporal_smoothing.py [videoPath]
 ```
 Output file(s):  
 (Output videos can be found in the directory */output*)
@@ -47,7 +47,7 @@ Output file(s):
 
 ### Luminance adjustment: (suggested)
 ```bash
-python3 luminance_adjustment.py [videoPath]
+python luminance_adjustment.py [videoPath]
 ```
 Output file(s):  
 (Output videos can be found in the directory */output*)
