@@ -154,7 +154,7 @@ Output file(s):
 (Output videos can be found in the directory */output*)
 - **LA_[videoName].mp4:**
 
-## (Method 2)
+## Style Transfer on Video (Method 2)
 #Unzip OptiaclFlow.zip, main folder: /fast-artistic-videos-master  
 	cd /fast-artistic-videos-master
 
