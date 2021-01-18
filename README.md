@@ -104,13 +104,13 @@ python my_test.py \
 ## Style Transfer on Video
 For better output result, we work on content-color preserving, luminance-style transferring, and video deflickering.
 
-## Associated files
+### Associated files
 - my_video.py
 - luminance_adjustment.py
 - temporal_smoothing.py
 
-## Style transfer
-### Baseline
+### Style transfer
+#### Baseline
 Use `--style` to select the desired style: oil/water/sketch/ink.
 ```bash
 python my_video.py --style [style options]
@@ -136,8 +136,8 @@ Style transfer is achieved through being stylized by whole information in the st
 Note that these output files are with flicker.
 To perform video deflickering, follow the instructions below.
 
-## Video deflickering
-### Temporal smoothing:
+### Video deflickering
+#### Temporal smoothing:
 ```bash
 python temporal_smoothing.py [videoPath]
 ```
@@ -146,7 +146,7 @@ Output file(s):
 
 - **TS_[videoName].mp4:**
 
-### Luminance adjustment: (suggested)
+#### Luminance adjustment: (suggested)
 ```bash
 python luminance_adjustment.py [videoPath]
 ```
