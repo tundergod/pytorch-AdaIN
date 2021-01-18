@@ -155,7 +155,7 @@ Output file(s):
 - **LA_[videoName].mp4:**
 
 ## Style Transfer on Video (Method 2)
-#Unzip OptiaclFlow.zip, main folder: /fast-artistic-videos-master  
+- Unzip OptiaclFlow.zip, main folder: /fast-artistic-videos-master  
 	cd /fast-artistic-videos-master
 
 ### Environment Setting
