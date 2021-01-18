@@ -4,7 +4,7 @@ For better output result, we work on content-color preserving, luminance-style t
 
 ## Associated files
 - my_video.py
-- luminance_adjustance.py
+- luminance_adjustment.py
 - temporal_smoothing.py
 
 ## Style transfer
