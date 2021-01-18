@@ -35,7 +35,7 @@ Note that these output files are with flicker.
 To perform video deflickering, follow the instructions below.  
 
 ## Video deflickering
-Temporal smoothing:
+### Temporal smoothing:
 ```bash
 python3 temporal_smoothing.py [videoPath]
 ```
@@ -45,7 +45,7 @@ Output file(s):
 - **TS_[videoName].mp4:**
 
 
-Luminance adjustment: (suggested)
+### Luminance adjustment: (suggested)
 ```bash
 python3 luminance_adjustment.py [videoPath]
 ```
