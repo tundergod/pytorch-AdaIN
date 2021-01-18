@@ -1,4 +1,3 @@
-# pytorch-AdaIN
 # CSIE 5612: Digital Image Processing (DIP) Final Project (Style Transfer on Image and Video)
 
 This is a final project from the Digital Image Processing (DIP) Course (CSIE 5612) on Fall 2020 in National Taiwan University (NTU), Taiwan. This project aims for rendering images and videos with four required styles: sketch, ink painting (ink), watercolor (water), and oil painting (oil). This project is implemented based on a forked version of an unofficial pytorch implementation of a paper, Arbitrary Style Transfer in Real-time with Adaptive Instance Normalization [Huang+, ICCV2017].
