@@ -101,7 +101,7 @@ python my_test.py \
 --output imgs/reproduce/lake/ink
 ```
 
-## Style Transfer on Video
+## Style Transfer on Video (Method 1)
 For better output result, we work on content-color preserving, luminance-style transferring, and video deflickering.
 
 ### Associated files
@@ -154,6 +154,47 @@ Output file(s):
 (Output videos can be found in the directory */output*)
 - **LA_[videoName].mp4:**
 
+## (Method 2)
+#Unzip OptiaclFlow.zip, main folder: /fast-artistic-videos-master  
+	cd /fast-artistic-videos-master
+
+###Environment Setting
+	1.Install torch7:
+	  http://torch.ch/docs/getting-started.html#_
+	2.Update torch package
+	  luarocks install torch
+	  luarocks install nn
+	  luarocks install image
+	  luarocks install lua-cjson
+	  luarocks install hdf5
+	3.Install loadcaffe
+
+###Sample command
+--Run with optical flow, need around 1~2 hour
+	./stylizeVideo_deepflow.sh input/ntu.mp4 models/checkpoint-picasso-video.t7
+
+###Keep original color of video
+	python3 preserved.py
+	
+###Output image
+	Output frames will be in /ntu with filename: 0ut-00xxx.png
+	
+##Output video
+	Output video will be in /fast-artistic-videos-master with filename ntu-stylized.mp4
+
+##Pre-trained style models
+--pre-trained style models in /models folder
+	checkpoint-picasso-video.t7
+	checkpoint-WomanHat-video.t7
+	checkpoint-scream-video.t7
+	checkpoint-schlief-video.t7
+	checkpoint-mosaic-video.t7
+	checkpoint-candy-video.t7
+
+##If there is any problem, please contact:
+	d09922013@ntu.edu.tw
+
 ## References
 - [1]: X. Huang and S. Belongie. "Arbitrary Style Transfer in Real-time with Adaptive Instance Normalization.", in ICCV, 2017.
 - [2]: [Original implementation in Torch](https://github.com/xunhuang1995/AdaIN-style)
+- [3]: [Original implementation of video style transfer (method 2)](https://github.com/manuelruder/fast-artistic-videos)
