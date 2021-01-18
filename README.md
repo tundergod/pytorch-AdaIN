@@ -158,7 +158,7 @@ Output file(s):
 #Unzip OptiaclFlow.zip, main folder: /fast-artistic-videos-master  
 	cd /fast-artistic-videos-master
 
-###Environment Setting
+### Environment Setting
 	1.Install torch7:
 	  http://torch.ch/docs/getting-started.html#_
 	2.Update torch package
@@ -169,20 +169,20 @@ Output file(s):
 	  luarocks install hdf5
 	3.Install loadcaffe
 
-###Sample command
+### Sample command
 --Run with optical flow, need around 1~2 hour
 	./stylizeVideo_deepflow.sh input/ntu.mp4 models/checkpoint-picasso-video.t7
 
-###Keep original color of video
+### Keep original color of video
 	python3 preserved.py
 	
-###Output image
+### Output image
 	Output frames will be in /ntu with filename: 0ut-00xxx.png
 	
-##Output video
+## Output video
 	Output video will be in /fast-artistic-videos-master with filename ntu-stylized.mp4
 
-##Pre-trained style models
+## Pre-trained style models
 --pre-trained style models in /models folder
 	checkpoint-picasso-video.t7
 	checkpoint-WomanHat-video.t7
@@ -191,7 +191,7 @@ Output file(s):
 	checkpoint-mosaic-video.t7
 	checkpoint-candy-video.t7
 
-##If there is any problem, please contact:
+## If there is any problem, please contact:
 	d09922013@ntu.edu.tw
 
 ## References
