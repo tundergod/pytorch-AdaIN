@@ -13,7 +13,7 @@ Use `--style` to select desired style: oil/water/sketch/ink.
 ```bash
 python3 my_video.py --style [style options]
 ```
-By default, *sketch* and *ink* will convert the contents into graysacle and be stylized into outputs with *all information, i.e., luminance and color* in the style image. *oil* and *water* will only tranfer the style of *luminance* of the contents.
+By default, *sketch* and *ink* will convert the contents into graysacle and the grayscale contets will be stylized into outputs with *all information, i.e., luminance and color* in the style image. *oil* and *water* will only tranfer the style of *luminance* of the contents.
 Additional argument `--UV_color` can be specified if we want to transfer *oil* and *water* with *all imformation* in the style image and preserve the color of cnotents after stylization.
 
 Output file(s):
@@ -31,8 +31,10 @@ The input video `ntu.mp4` is style transferred into the style specified. Style t
 Temporal smoothing:
 ```bash
 python3 deflicker_temporal.py [videoPath]
-(Output videos can be found in the directory *output*)
 ```
+Output file(s):
+(Output videos can be found in the directory *output*)
+
 - **TS_[videoName].mp4:**
 
 
